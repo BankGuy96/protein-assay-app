@@ -7,209 +7,148 @@ import plotly.express as px
 import plotly.graph_objects as go
 from io import BytesIO
 
-# --- การตั้งค่าหน้าจอและหน้าตา (UI) ---
-st.set_page_config(page_title="Pro-Assay Analysis Ultra", layout="wide")
+# --- การตั้งค่าหน้าจอ ---
+st.set_page_config(page_title="Pro-Assay Ultra", layout="wide")
 
-# CSS สำหรับโทนสีเขียวและการอ่านง่ายบนมือถือ
+# --- CSS ขั้นสูงเพื่อความสวยงามและการซ่อน Text ที่ไม่ต้องการ ---
 st.markdown("""
     <style>
-    /* พื้นหลังเขียวอ่อนไล่เฉด */
-    .stApp {
-        background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
-    }
+    /* 1. พื้นหลังโทนเขียวมินต์ */
+    .stApp { background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); }
     
-    /* บังคับตัวอักษรพื้นฐานให้เข้มจัดเพื่อให้อ่านง่าย */
-    html, body, [class*="st-"] {
-        color: #052e16 !important;
-        font-family: 'Inter', 'Kanit', sans-serif;
-    }
+    /* 2. บังคับฟอนต์เข้มชัดเจน */
+    html, body, [class*="st-"] { color: #052e16 !important; font-family: 'Inter', 'Kanit', sans-serif; }
 
-    /* หัวข้อหลัก */
-    h1 {
-        color: #1b4332 !important;
-        font-weight: 800 !important;
-        text-align: center;
-        text-shadow: 1px 1px 1px rgba(255,255,255,0.8);
-    }
+    /* 3. กำจัดตัวหนังสือ arrow_right / arrow_down / arrow_drop_down */
+    [data-testid="stExpander"] svg + div { display: none !important; }
+    .st-emotion-cache-p5mtransition-element, .st-emotion-cache-1vt4y6f { font-size: 0px !important; color: transparent !important; }
+    
+    /* 4. ปรับหัวข้อ */
+    h1 { color: #1b4332 !important; font-weight: 800 !important; text-align: center; }
+    h2, h3 { color: #2d6a4f !important; font-weight: 700 !important; border-left: 6px solid #2d6a4f; padding-left: 12px; }
 
-    /* หัวข้อรอง */
-    h2, h3 {
-        color: #2d6a4f !important;
-        font-weight: 700 !important;
-        border-left: 5px solid #2d6a4f;
-        padding-left: 10px;
-    }
-
-    /* บังคับปุ่มให้ตัวอักษรสีขาวและเข้ม */
+    /* 5. ปุ่มกด: ฟอนต์ขาวเท่านั้น */
     div.stButton > button, div.stDownloadButton > button {
         background-color: #1b4332 !important;
         border: 2px solid #081c15;
         border-radius: 12px;
-        padding: 0.6rem 1rem;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        height: 3rem;
     }
-
-    /* บังคับตัวหนังสือในปุ่ม (Tag <p>) เป็นสีขาว */
     div.stButton > button p, div.stDownloadButton > button p {
         color: #ffffff !important;
         font-weight: 700 !important;
         font-size: 1.1rem !important;
     }
+    div.stButton > button:hover { background-color: #2d6a4f !important; transform: translateY(-2px); }
 
-    div.stButton > button:hover {
-        background-color: #2d6a4f !important;
-        transform: scale(1.02);
-    }
-
-    /* ปรับปรุง Label ช่องกรอกข้อมูลให้หนาขึ้น */
-    label p {
-        color: #052e16 !important;
-        font-weight: 600 !important;
-    }
-
-    /* ปรับพื้นหลัง Expander ให้ขาวสะอาด */
-    .streamlit-expanderHeader {
-        background-color: white !important;
-        border: 1px solid #c8e6c9 !important;
-        border-radius: 10px;
-    }
+    /* 6. แก้ไขตารางขาวสะอาด */
+    .stDataEditor { background-color: white !important; border-radius: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🌿 Pro-Assay Analysis (Ultra Edition)")
-st.markdown("<center>โปรแกรมวิเคราะห์ความเข้มข้นโปรตีน สำหรับงานวิจัยในแล็บ</center>", unsafe_allow_html=True)
+st.title("🌿 Pro-Assay Analysis Ultra")
+st.markdown("<p style='text-align: center;'>วิเคราะห์ค่าความเข้มข้นโปรตีนแม่นยำสูง รองรับ Triplicate</p>", unsafe_allow_html=True)
 
-# --- ส่วนที่ 1: การตั้งค่า Assay ---
+# --- ส่วนที่ 1: Assay Config ---
 with st.container():
-    st.subheader("📍 1. Assay Configuration")
-    col_a, col_b, col_c = st.columns(3)
-    with col_a:
-        assay_type = st.selectbox("Assay Method", ["BCA Assay (A562)", "Bradford Assay (A595)"])
+    st.subheader("📍 1. Assay Information")
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        assay_type = st.selectbox("Method", ["BCA Assay (A562)", "Bradford Assay (A595)"])
         y_label = "Absorbance (A562)" if "BCA" in assay_type else "Absorbance (A595)"
-    with col_b:
-        protein_name = st.text_input("Project Name", "Exp_Batch_001")
-    with col_c:
-        exp_date = st.date_input("Experiment Date")
+    with c2:
+        proj_name = st.text_input("Project Name", "Lab_Batch_01")
+    with c3:
+        date_val = st.date_input("Date")
 
 st.markdown("---")
 
-# --- ส่วนที่ 2: Standard Curve (BSA Triplicate) ---
-st.subheader(f"📊 2. Standard Curve (BSA Triplicate)")
-with st.expander("📝 คลิกเพื่อกรอกข้อมูล BSA Standard", expanded=True):
-    default_bsa = pd.DataFrame({
-        'BSA Conc (mg/mL)': [0.0, 0.125, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0],
-        'Abs 1': [0.0]*8, 'Abs 2': [0.0]*8, 'Abs 3': [0.0]*8,
-        'Blank Abs': [0.0]*8
+# --- ส่วนที่ 2: Standard Curve ---
+st.subheader("📊 2. Standard Curve (BSA)")
+with st.expander("📝 กรอกข้อมูล BSA Standard", expanded=True):
+    df_bsa = pd.DataFrame({
+        'Conc (mg/mL)': [0.0, 0.125, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0],
+        'Abs 1': [0.0]*8, 'Abs 2': [0.0]*8, 'Abs 3': [0.0]*8, 'Blank': [0.0]*8
     })
     
-    # ปรับความกว้างคอลัมน์เพื่อเลี่ยงไอคอนทับตัวหนังสือ
+    # กำหนดความกว้างคอลัมน์เป็น Pixel เพื่อกันไอคอนทับ
     bsa_input = st.data_editor(
-        default_bsa, 
-        num_rows="dynamic", 
-        use_container_width=True,
+        df_bsa, num_rows="dynamic", use_container_width=True,
         column_config={
-            "BSA Conc (mg/mL)": st.column_config.NumberColumn(width="medium"),
-            "Abs 1": st.column_config.NumberColumn(width="small"),
-            "Abs 2": st.column_config.NumberColumn(width="small"),
-            "Abs 3": st.column_config.NumberColumn(width="small"),
-            "Blank Abs": st.column_config.NumberColumn(width="small")
+            "Conc (mg/mL)": st.column_config.NumberColumn(width=130, format="%.3f"),
+            "Abs 1": st.column_config.NumberColumn(width=90),
+            "Abs 2": st.column_config.NumberColumn(width=90),
+            "Abs 3": st.column_config.NumberColumn(width=90),
+            "Blank": st.column_config.NumberColumn(width=90)
         }
     )
 
 if st.button("📈 วิเคราะห์ Standard Curve"):
-    abs_cols = ['Abs 1', 'Abs 2', 'Abs 3']
-    # เฉลี่ยเฉพาะช่องที่ไม่เป็น 0 (NaN จะไม่ถูกนำมาคิดค่าเฉลี่ย)
-    temp_abs = bsa_input[abs_cols].replace(0, np.nan)
-    bsa_input['Avg Abs'] = temp_abs.mean(axis=1)
-    bsa_input['Corrected Abs'] = bsa_input['Avg Abs'] - bsa_input['Blank Abs']
+    cols = ['Abs 1', 'Abs 2', 'Abs 3']
+    temp = bsa_input[cols].replace(0, np.nan)
+    bsa_input['Avg'] = temp.mean(axis=1)
+    bsa_input['Net'] = bsa_input['Avg'] - bsa_input['Blank']
+    clean = bsa_input.dropna(subset=['Net'])
     
-    clean_bsa = bsa_input.dropna(subset=['Corrected Abs'])
-    
-    if len(clean_bsa) > 1:
-        X = clean_bsa[['BSA Conc (mg/mL)']].values
-        y = clean_bsa['Corrected Abs'].values
+    if len(clean) > 1:
+        X = clean[['Conc (mg/mL)']].values
+        y = clean['Net'].values
         model = LinearRegression().fit(X, y)
         r2 = r2_score(y, model.predict(X))
-        
-        st.session_state.slope = model.coef_[0]
-        st.session_state.intercept = model.intercept_
-        st.session_state.r2 = r2
+        st.session_state.m, st.session_state.c, st.session_state.r2 = model.coef_[0], model.intercept_, r2
 
-        c1, c2 = st.columns([1, 2])
-        with c1:
-            st.metric("Linearity (R²)", f"{r2:.4f}")
-            st.success(f"**Equation:** y = {st.session_state.slope:.4f}x + {st.session_state.intercept:.4f}")
-            if r2 < 0.98:
-                st.warning("⚠️ R² ต่ำกว่า 0.98 ลองเช็กค่าเบี่ยงเบนรายจุด")
-        with c2:
-            fig = px.scatter(clean_bsa, x='BSA Conc (mg/mL)', y='Corrected Abs', trendline="ols",
-                             labels={'Corrected Abs': y_label}, template="plotly_white")
-            fig.update_traces(marker=dict(color='#2d6a4f', size=10))
+        sc1, sc2 = st.columns([1, 2])
+        with sc1:
+            st.metric("R² Score", f"{r2:.4f}")
+            st.success(f"y = {st.session_state.m:.4f}x + {st.session_state.c:.4f}")
+        with sc2:
+            fig = px.scatter(clean, x='Conc (mg/mL)', y='Net', trendline="ols", template="simple_white")
+            fig.update_traces(marker=dict(color='#1b4332', size=10))
             st.plotly_chart(fig, use_container_width=True)
     else:
-        st.error("กรุณากรอกข้อมูล BSA อย่างน้อย 2 จุดขึ้นไป")
+        st.error("กรุณากรอกข้อมูลอย่างน้อย 2 แถว")
 
 st.markdown("---")
 
-# --- ส่วนที่ 3: Sample Analysis (Triplicate Support) ---
-st.subheader("🧪 3. Sample Analysis (Triplicate)")
-col1, col2 = st.columns([1, 3])
-with col1:
-    num_samples = st.number_input("จำนวนตัวอย่าง (Samples)", min_value=1, value=3)
-    sample_names_raw = st.text_area("รายชื่อตัวอย่าง (แยกด้วยเครื่องหมาย , )", "S1, S2, S3")
-    s_list = [s.strip() for s in sample_names_raw.split(',')]
-    while len(s_list) < num_samples: s_list.append(f"Sample {len(s_list)+1}")
+# --- ส่วนที่ 3: Sample Analysis ---
+st.subheader("🧪 3. Sample Analysis")
+scol1, scol2 = st.columns([1, 3])
+with scol1:
+    n_s = st.number_input("จำนวนตัวอย่าง", min_value=1, value=3)
+    s_names = st.text_area("ชื่อตัวอย่าง (แยกด้วย , )", "S1, S2, S3")
+    names = [n.strip() for n in s_names.split(',')]
+    while len(names) < n_s: names.append(f"Sample {len(names)+1}")
 
-with col2:
-    default_samples = pd.DataFrame({
-        'Sample Name': s_list[:num_samples],
-        'Dilution Factor': [1.0] * num_samples,
-        'Abs 1': [0.0] * num_samples,
-        'Abs 2': [0.0] * num_samples,
-        'Abs 3': [0.0] * num_samples,
-        'Blank Abs': [0.0] * num_samples
+with scol2:
+    df_s = pd.DataFrame({
+        'Sample Name': names[:n_s], 'Dilution': [1.0]*n_s,
+        'Abs 1': [0.0]*n_s, 'Abs 2': [0.0]*n_s, 'Abs 3': [0.0]*n_s, 'Blank': [0.0]*n_s
     })
-    sample_input = st.data_editor(
-        default_samples, 
-        num_rows="dynamic", 
-        use_container_width=True,
+    s_input = st.data_editor(
+        df_s, num_rows="dynamic", use_container_width=True,
         column_config={
-            "Sample Name": st.column_config.TextColumn(width="medium"),
-            "Dilution Factor": st.column_config.NumberColumn(width="small")
+            "Sample Name": st.column_config.TextColumn(width=150),
+            "Dilution": st.column_config.NumberColumn(width=100)
         }
     )
 
-if st.button("🧮 คำนวณความเข้มข้นตัวอย่าง"):
-    if 'slope' not in st.session_state:
-        st.error("❌ ต้องวิเคราะห์ Standard Curve ก่อนคำนวณตัวอย่าง")
+if st.button("🧮 คำนวณความเข้มข้น"):
+    if 'm' not in st.session_state:
+        st.error("วิเคราะห์ Standard Curve ก่อนครับ")
     else:
-        res = sample_input.copy()
-        temp_s_abs = res[['Abs 1', 'Abs 2', 'Abs 3']].replace(0, np.nan)
-        res['Avg Abs'] = temp_s_abs.mean(axis=1)
-        res['Corrected Abs'] = res['Avg Abs'] - res['Blank Abs']
+        res = s_input.copy()
+        res['Avg'] = res[['Abs 1', 'Abs 2', 'Abs 3']].replace(0, np.nan).mean(axis=1)
+        res['Net'] = res['Avg'] - res['Blank']
+        res['Conc'] = (res['Net'] - st.session_state.c) / st.session_state.m
+        res['Conc'] = res['Conc'].apply(lambda x: x if x > 0 else 0)
+        res['Final_Conc'] = res['Conc'] * res['Dilution']
         
-        # คำนวณหาค่า x จาก y (x = (y-c)/m)
-        res['Conc (mg/mL)'] = (res['Corrected Abs'] - st.session_state.intercept) / st.session_state.slope
-        # ล้างค่าติดลบให้เป็น 0 (กรณี Abs ต่ำกว่า Blank)
-        res['Conc (mg/mL)'] = res['Conc (mg/mL)'].apply(lambda x: x if x > 0 else 0)
-        res['Final Conc (x Dilution)'] = res['Conc (mg/mL)'] * res['Dilution Factor']
-        
-        st.write("### 📋 ตารางสรุปผลการวิเคราะห์")
-        st.dataframe(res.style.background_gradient(subset=['Final Conc (x Dilution)'], cmap='Greens'), use_container_width=True)
+        st.write("#### 📋 รายงานผลการวิเคราะห์")
+        st.dataframe(res.style.background_gradient(subset=['Final_Conc'], cmap='Greens'), use_container_width=True)
 
-        # บันทึกเป็น Excel
         output = BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            res.to_excel(writer, index=False, sheet_name='Sample_Results')
-            pd.DataFrame({
-                'Parameter': ['Assay Type', 'Date', 'Slope', 'Intercept', 'R-Square'],
-                'Value': [assay_type, str(exp_date), st.session_state.slope, st.session_state.intercept, st.session_state.r2]
-            }).to_excel(writer, index=False, sheet_name='Calibration_Info')
-        
-        st.download_button(
-            label="📥 ดาวน์โหลดรายงาน Excel",
-            data=output.getvalue(),
-            file_name=f"Report_{protein_name}_{exp_date}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+            res.to_excel(writer, index=False, sheet_name='Results')
+            pd.DataFrame({'Metric': ['Slope', 'Intercept', 'R2'], 
+                          'Value': [st.session_state.m, st.session_state.c, st.session_state.r2]}).to_excel(writer, index=False, sheet_name='Curve')
+        st.download_button("📥 Save to Excel", output.getvalue(), f"Report_{proj_name}.xlsx")
