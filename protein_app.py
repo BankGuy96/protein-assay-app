@@ -192,4 +192,3 @@ if st.button("🧮 คำนวณความเข้มข้น"):
         st.download_button("📥 Save Report to Excel", output.getvalue(), f"Protein_Analysis_{exp_date}.xlsx")
 
 
-
