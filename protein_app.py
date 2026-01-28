@@ -52,14 +52,34 @@ st.markdown("""
         font-size: 1.1rem !important;
     }
 
-    /* ปุ่มกดให้เข้มและคม */
+    /* ปรับแต่งปุ่มกดให้คมชัดและตัวอักษรสีขาว */
     .stButton>button {
-        background-color: #1b4332 !important;
-        color: #ffffff !important;
+        background-color: #1b4332 !important; /* พื้นหลังเขียวเข้มจัด */
+        color: #ffffff !important;           /* ตัวอักษรสีขาวบริสุทธิ์ */
         border: 2px solid #081c15;
-        font-size: 1.1rem;
+        font-size: 1.15rem !important;      /* ขยายขนาดตัวอักษรเล็กน้อย */
+        font-weight: 700 !important;
+        border-radius: 12px;
+        padding: 0.6rem 1rem;
+        transition: all 0.3s ease-in-out;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+    }
+    
+    /* เอฟเฟกต์ตอนเอาเมาส์วาง หรือกดปุ่ม */
+    .stButton>button:hover {
+        background-color: #2d6a4f !important; /* สว่างขึ้นเล็กน้อยตอนชี้ */
+        color: #f1f8e9 !important;           /* ตัวอักษรเปลี่ยนเป็นสีเขียวอ่อนนวลๆ */
+        border-color: #4caf50;
+        transform: scale(1.02);              /* ขยายปุ่มเล็กน้อยให้ดูมีมิติ */
+    }
+
+    /* ปรับแต่งปุ่ม Download (ซึ่งใช้ Tag ต่างกันใน Streamlit) */
+    .stDownloadButton>button {
+        background-color: #2d6a4f !important;
+        color: #ffffff !important;
+        border-radius: 12px;
         font-weight: 700;
-        letter-spacing: 0.5px;
+        width: 100%;
     }
     
     /* ช่อง Expander ให้พื้นหลังขาวสะอาดเพื่อขับตัวหนังสือ */
@@ -170,5 +190,6 @@ if st.button("🧮 คำนวณความเข้มข้น"):
                           'Value': [st.session_state.slope, st.session_state.intercept, st.session_state.r2]}).to_excel(writer, index=False, sheet_name='Calibration_Data')
         
         st.download_button("📥 Save Report to Excel", output.getvalue(), f"Protein_Analysis_{exp_date}.xlsx")
+
 
 
