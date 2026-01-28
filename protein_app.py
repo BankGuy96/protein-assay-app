@@ -12,43 +12,60 @@ st.set_page_config(page_title="Pro-Assay Green Edition", layout="wide")
 
 st.markdown("""
     <style>
-    /* พื้นหลังแบบไล่เฉดเขียวอ่อน */
+    /* พื้นหลังเขียวอ่อนคงเดิม แต่เพิ่มความชัดของฟอนต์ */
     .stApp {
         background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
     }
-    /* หัวข้อหลักสีเขียวเข้มสะอาดตา */
+    
+    /* บังคับตัวอักษรทุกจุดให้เป็นสีเข้มจัด */
+    html, body, [class*="st-"] {
+        color: #052e16 !important; /* สีเขียวเข้มเกือบดำ */
+        font-family: 'Inter', 'Kanit', sans-serif;
+        font-weight: 500; /* เพิ่มความหนาเริ่มต้น */
+    }
+
+    /* หัวข้อหลักให้เด่นสุดๆ */
     h1 {
-        color: #2e7d32;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        font-weight: 700;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+        color: #1b4332 !important;
+        font-weight: 800 !important;
+        text-shadow: 1px 1px 1px rgba(255,255,255,0.8);
     }
-    /* การจัดรูปแบบ Container */
-    [data-testid="stVerticalBlock"] > div:has(div.stExpander) {
+
+    /* หัวข้อรอง (Subheader) */
+    h2, h3 {
+        color: #2d6a4f !important;
+        font-weight: 700 !important;
+        border-left: 5px solid #2d6a4f;
+        padding-left: 10px;
+    }
+
+    /* ปรับแต่งตารางให้ตัวเลขชัดเจนบนมือถือ */
+    .stDataFrame div[data-testid="stTable"] {
         background-color: white;
-        border-radius: 15px;
-        padding: 10px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        color: black !important;
     }
-    /* ปรับแต่งปุ่มกดสีเขียว */
+    
+    /* ปรับแต่ง Label ของช่องกรอกข้อมูล */
+    label p {
+        color: #052e16 !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+    }
+
+    /* ปุ่มกดให้เข้มและคม */
     .stButton>button {
-        background-color: #4caf50;
-        color: white;
-        border: none;
-        border-radius: 12px;
-        padding: 10px 24px;
-        font-weight: 600;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
+        background-color: #1b4332 !important;
+        color: #ffffff !important;
+        border: 2px solid #081c15;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
     }
-    .stButton>button:hover {
-        background-color: #388e3c;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-    }
-    /* ปรับแต่งตาราง */
-    .stDataFrame {
-        border: 1px solid #c8e6c9;
+    
+    /* ช่อง Expander ให้พื้นหลังขาวสะอาดเพื่อขับตัวหนังสือ */
+    .streamlit-expanderHeader {
+        background-color: #ffffff !important;
+        border: 1px solid #c8e6c9 !important;
         border-radius: 10px;
     }
     </style>
@@ -153,3 +170,4 @@ if st.button("🧮 คำนวณความเข้มข้น"):
                           'Value': [st.session_state.slope, st.session_state.intercept, st.session_state.r2]}).to_excel(writer, index=False, sheet_name='Calibration_Data')
         
         st.download_button("📥 Save Report to Excel", output.getvalue(), f"Protein_Analysis_{exp_date}.xlsx")
+
