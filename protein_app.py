@@ -134,4 +134,82 @@ if st.button("📈 วิเคราะห์ Standard Curve"):
         
         st.session_state.slope = model.coef_[0]
         st.session_state.intercept = model.intercept_
-        st.session_state.r2 = r
+        st.session_state.r2 = r2
+
+        c1, c2 = st.columns([1, 2])
+        with c1:
+            st.metric("Linearity (R²)", f"{r2:.4f}")
+            st.success(f"**Equation:** y = {st.session_state.slope:.4f}x + {st.session_state.intercept:.4f}")
+            if r2 < 0.98:
+                st.warning("⚠️ R² ต่ำกว่า 0.98 ลองเช็กค่าเบี่ยงเบนรายจุด")
+        with c2:
+            fig = px.scatter(clean_bsa, x='BSA Conc (mg/mL)', y='Corrected Abs', trendline="ols",
+                             labels={'Corrected Abs': y_label}, template="plotly_white")
+            fig.update_traces(marker=dict(color='#2d6a4f', size=10))
+            st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.error("กรุณากรอกข้อมูล BSA อย่างน้อย 2 จุดขึ้นไป")
+
+st.markdown("---")
+
+# --- ส่วนที่ 3: Sample Analysis (Triplicate Support) ---
+st.subheader("🧪 3. Sample Analysis (Triplicate)")
+col1, col2 = st.columns([1, 3])
+with col1:
+    num_samples = st.number_input("จำนวนตัวอย่าง (Samples)", min_value=1, value=3)
+    sample_names_raw = st.text_area("รายชื่อตัวอย่าง (แยกด้วยเครื่องหมาย , )", "S1, S2, S3")
+    s_list = [s.strip() for s in sample_names_raw.split(',')]
+    while len(s_list) < num_samples: s_list.append(f"Sample {len(s_list)+1}")
+
+with col2:
+    default_samples = pd.DataFrame({
+        'Sample Name': s_list[:num_samples],
+        'Dilution Factor': [1.0] * num_samples,
+        'Abs 1': [0.0] * num_samples,
+        'Abs 2': [0.0] * num_samples,
+        'Abs 3': [0.0] * num_samples,
+        'Blank Abs': [0.0] * num_samples
+    })
+    sample_input = st.data_editor(
+        default_samples, 
+        num_rows="dynamic", 
+        use_container_width=True,
+        column_config={
+            "Sample Name": st.column_config.TextColumn(width="medium"),
+            "Dilution Factor": st.column_config.NumberColumn(width="small")
+        }
+    )
+
+if st.button("🧮 คำนวณความเข้มข้นตัวอย่าง"):
+    if 'slope' not in st.session_state:
+        st.error("❌ ต้องวิเคราะห์ Standard Curve ก่อนคำนวณตัวอย่าง")
+    else:
+        res = sample_input.copy()
+        temp_s_abs = res[['Abs 1', 'Abs 2', 'Abs 3']].replace(0, np.nan)
+        res['Avg Abs'] = temp_s_abs.mean(axis=1)
+        res['Corrected Abs'] = res['Avg Abs'] - res['Blank Abs']
+        
+        # คำนวณหาค่า x จาก y (x = (y-c)/m)
+        res['Conc (mg/mL)'] = (res['Corrected Abs'] - st.session_state.intercept) / st.session_state.slope
+        # ล้างค่าติดลบให้เป็น 0 (กรณี Abs ต่ำกว่า Blank)
+        res['Conc (mg/mL)'] = res['Conc (mg/mL)'].apply(lambda x: x if x > 0 else 0)
+        res['Final Conc (x Dilution)'] = res['Conc (mg/mL)'] * res['Dilution Factor']
+        
+        st.write("### 📋 ตารางสรุปผลการวิเคราะห์")
+        st.dataframe(res.style.background_gradient(subset=['Final Conc (x Dilution)'], cmap='Greens'), use_container_width=True)
+
+        # บันทึกเป็น Excel
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            res.to_excel(writer, index=False, sheet_name='Sample_Results')
+            pd.DataFrame({
+                'Parameter': ['Assay Type', 'Date', 'Slope', 'Intercept', 'R-Square'],
+                'Value': [assay_type, str(exp_date), st.session_state.slope, st.session_state.intercept, st.session_state.r2]
+            }).to_excel(writer, index=False, sheet_name='Calibration_Info')
+        
+        st.download_button(
+            label="📥 ดาวน์โหลดรายงาน Excel",
+            data=output.getvalue(),
+            file_name=f"Report_{protein_name}_{exp_date}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
