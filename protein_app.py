@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 from io import BytesIO
 
 # --- UI Customization: Green Soft Tone ---
-st.set_page_config(page_title="Pro-Assay Green Edition", layout="wide")
+st.set_page_config(page_title="Pro-Assay ", layout="wide")
 
 st.markdown("""
     <style>
@@ -170,4 +170,5 @@ if st.button("🧮 คำนวณความเข้มข้น"):
                           'Value': [st.session_state.slope, st.session_state.intercept, st.session_state.r2]}).to_excel(writer, index=False, sheet_name='Calibration_Data')
         
         st.download_button("📥 Save Report to Excel", output.getvalue(), f"Protein_Analysis_{exp_date}.xlsx")
+
 
