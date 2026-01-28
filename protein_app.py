@@ -7,87 +7,37 @@ import plotly.express as px
 import plotly.graph_objects as go
 from io import BytesIO
 
-# --- UI Customization: Green Soft Tone ---
-st.set_page_config(page_title="Pro-Assay ", layout="wide")
+st.set_page_config(page_title="Pro-Assay Analysis", layout="wide")
 
+# --- UI Customization ---
 st.markdown("""
     <style>
-    /* พื้นหลังเขียวอ่อนคงเดิม แต่เพิ่มความชัดของฟอนต์ */
-    .stApp {
-        background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
-    }
+    .stApp { background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); }
     
-    /* บังคับตัวอักษรทุกจุดให้เป็นสีเข้มจัด */
-    html, body, [class*="st-"] {
-        color: #052e16 !important; /* สีเขียวเข้มเกือบดำ */
-        font-family: 'Inter', 'Kanit', sans-serif;
-        font-weight: 500; /* เพิ่มความหนาเริ่มต้น */
-    }
+    html, body, [class*="st-"] { color: #052e16 !important; font-family: 'Inter', 'Kanit', sans-serif; }
 
-    /* หัวข้อหลักให้เด่นสุดๆ */
-    h1 {
-        color: #1b4332 !important;
-        font-weight: 800 !important;
-        text-shadow: 1px 1px 1px rgba(255,255,255,0.8);
-    }
-
-    /* หัวข้อรอง (Subheader) */
-    h2, h3 {
-        color: #2d6a4f !important;
-        font-weight: 700 !important;
-        border-left: 5px solid #2d6a4f;
-        padding-left: 10px;
-    }
-
-    /* ปรับแต่งตารางให้ตัวเลขชัดเจนบนมือถือ */
-    .stDataFrame div[data-testid="stTable"] {
-        background-color: white;
-        color: black !important;
-    }
-    
-    /* ปรับแต่ง Label ของช่องกรอกข้อมูล */
-    label p {
-        color: #052e16 !important;
-        font-weight: 600 !important;
-        font-size: 1.1rem !important;
-    }
-
-    /* ปรับแต่งปุ่มกดให้คมชัดและตัวอักษรสีขาว */
-    .stButton>button {
-        background-color: #1b4332 !important; /* พื้นหลังเขียวเข้มจัด */
-        color: #ffffff !important;           /* ตัวอักษรสีขาวบริสุทธิ์ */
+    /* บังคับฟอนต์ในปุ่มให้เป็นสีขาวเท่านั้น */
+    div.stButton > button, div.stDownloadButton > button {
+        background-color: #1b4332 !important;
         border: 2px solid #081c15;
-        font-size: 1.15rem !important;      /* ขยายขนาดตัวอักษรเล็กน้อย */
-        font-weight: 700 !important;
         border-radius: 12px;
         padding: 0.6rem 1rem;
-        transition: all 0.3s ease-in-out;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.15);
-    }
-    
-    /* เอฟเฟกต์ตอนเอาเมาส์วาง หรือกดปุ่ม */
-    .stButton>button:hover {
-        background-color: #2d6a4f !important; /* สว่างขึ้นเล็กน้อยตอนชี้ */
-        color: #f1f8e9 !important;           /* ตัวอักษรเปลี่ยนเป็นสีเขียวอ่อนนวลๆ */
-        border-color: #4caf50;
-        transform: scale(1.02);              /* ขยายปุ่มเล็กน้อยให้ดูมีมิติ */
+        transition: all 0.3s ease;
     }
 
-    /* ปรับแต่งปุ่ม Download (ซึ่งใช้ Tag ต่างกันใน Streamlit) */
-    .stDownloadButton>button {
-        background-color: #2d6a4f !important;
+    /* เจาะจงไปที่ตัวอักษรภายในปุ่ม */
+    div.stButton > button p, div.stDownloadButton > button p {
         color: #ffffff !important;
-        border-radius: 12px;
-        font-weight: 700;
-        width: 100%;
+        font-weight: 700 !important;
+        font-size: 1.15rem !important;
     }
-    
-    /* ช่อง Expander ให้พื้นหลังขาวสะอาดเพื่อขับตัวหนังสือ */
-    .streamlit-expanderHeader {
-        background-color: #ffffff !important;
-        border: 1px solid #c8e6c9 !important;
-        border-radius: 10px;
+
+    div.stButton > button:hover {
+        background-color: #2d6a4f !important;
+        transform: scale(1.02);
     }
+
+    .streamlit-expanderHeader { background-color: white !important; border-radius: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -108,7 +58,7 @@ with st.container():
 
 st.markdown("---")
 
-# --- ส่วนที่ 2: Standard Curve ---
+# --- ส่วนที่ 2: Standard Curve (แก้ไขตารางไม่ให้ไอคอนทับ) ---
 st.subheader(f"📊 2. Standard Curve (BSA Triplicate)")
 with st.expander("📝 คลิกเพื่อกรอกข้อมูล BSA", expanded=True):
     default_bsa = pd.DataFrame({
@@ -116,7 +66,20 @@ with st.expander("📝 คลิกเพื่อกรอกข้อมูล
         'Abs 1': [0.0]*8, 'Abs 2': [0.0]*8, 'Abs 3': [0.0]*8,
         'Blank Abs': [0.0]*8
     })
-    bsa_input = st.data_editor(default_bsa, num_rows="dynamic", use_container_width=True)
+    
+    # ปรับความกว้างคอลัมน์เพื่อไม่ให้ไอคอนทับตัวหนังสือ
+    bsa_input = st.data_editor(
+        default_bsa, 
+        num_rows="dynamic", 
+        use_container_width=True,
+        column_config={
+            "BSA Conc (mg/mL)": st.column_config.NumberColumn(width="medium"),
+            "Abs 1": st.column_config.NumberColumn(width="small"),
+            "Abs 2": st.column_config.NumberColumn(width="small"),
+            "Abs 3": st.column_config.NumberColumn(width="small"),
+            "Blank Abs": st.column_config.NumberColumn(width="small")
+        }
+    )
 
 if st.button("📈 วิเคราะห์และสร้างกราฟ"):
     abs_cols = ['Abs 1', 'Abs 2', 'Abs 3']
@@ -190,5 +153,6 @@ if st.button("🧮 คำนวณความเข้มข้น"):
                           'Value': [st.session_state.slope, st.session_state.intercept, st.session_state.r2]}).to_excel(writer, index=False, sheet_name='Calibration_Data')
         
         st.download_button("📥 Save Report to Excel", output.getvalue(), f"Protein_Analysis_{exp_date}.xlsx")
+
 
 
