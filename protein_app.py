@@ -65,23 +65,26 @@ st.markdown("---")
 
 # --- ส่วนที่ 2: Standard Curve ---
 st.subheader("📊 2. Standard Curve (BSA)")
-with st.expander("📝 กรอกข้อมูล BSA Standard", expanded=True):
-    df_bsa = pd.DataFrame({
-        'Conc (mg/mL)': [0.0, 0.125, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0],
-        'Abs 1': [0.0]*8, 'Abs 2': [0.0]*8, 'Abs 3': [0.0]*8, 'Blank': [0.0]*8
-    })
-    
-    # กำหนดความกว้างคอลัมน์เป็น Pixel เพื่อกันไอคอนทับ
-    bsa_input = st.data_editor(
-        df_bsa, num_rows="dynamic", use_container_width=True,
-        column_config={
-            "Conc (mg/mL)": st.column_config.NumberColumn(width=130, format="%.3f"),
-            "Abs 1": st.column_config.NumberColumn(width=90),
-            "Abs 2": st.column_config.NumberColumn(width=90),
-            "Abs 3": st.column_config.NumberColumn(width=90),
-            "Blank": st.column_config.NumberColumn(width=90)
-        }
-    )
+
+# ใช้ markdown เพื่อทำตัวหนาและใส่ไอคอน แทนการใช้ expander
+st.markdown("#### 📝 กรอกข้อมูล BSA Standard") 
+
+# วางตารางไว้ด้านล่างหัวข้อโดยตรง (ไม่ต้องย่อหน้า)
+df_bsa = pd.DataFrame({
+    'Conc (mg/mL)': [0.0, 0.125, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0],
+    'Abs 1': [0.0]*8, 'Abs 2': [0.0]*8, 'Abs 3': [0.0]*8, 'Blank': [0.0]*8
+})
+
+bsa_input = st.data_editor(
+    df_bsa, num_rows="dynamic", use_container_width=True,
+    column_config={
+        "Conc (mg/mL)": st.column_config.NumberColumn(width=130, format="%.3f"),
+        "Abs 1": st.column_config.NumberColumn(width=90),
+        "Abs 2": st.column_config.NumberColumn(width=90),
+        "Abs 3": st.column_config.NumberColumn(width=90),
+        "Blank": st.column_config.NumberColumn(width=90)
+    }
+)
 
 if st.button("📈 วิเคราะห์ Standard Curve"):
     cols = ['Abs 1', 'Abs 2', 'Abs 3']
@@ -152,3 +155,4 @@ if st.button("🧮 คำนวณความเข้มข้น"):
             pd.DataFrame({'Metric': ['Slope', 'Intercept', 'R2'], 
                           'Value': [st.session_state.m, st.session_state.c, st.session_state.r2]}).to_excel(writer, index=False, sheet_name='Curve')
         st.download_button("📥 Save to Excel", output.getvalue(), f"Report_{proj_name}.xlsx")
+
